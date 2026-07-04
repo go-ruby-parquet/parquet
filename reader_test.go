@@ -145,28 +145,3 @@ func TestReaderClosePfError(t *testing.T) {
 		t.Errorf("second close = %v, want nil", err)
 	}
 }
-
-func TestReaderCloseCloserError(t *testing.T) {
-	rd, err := NewArrowFileReader(bytes.NewReader(sampleBytes(t)))
-	if err != nil {
-		t.Fatalf("open: %v", err)
-	}
-	// pf.Close over a *bytes.Reader (not a Closer) succeeds; inject a failing
-	// owned closer so only the closer branch fails.
-	rd.closer = failCloser{}
-	if err := rd.Close(); !errKind(err, KindIO) {
-		t.Errorf("closer error = %v, want KindIO", err)
-	}
-}
-
-func TestReaderCloseBothError(t *testing.T) {
-	rd, err := NewArrowFileReader(newFailReadSeekCloser(sampleBytes(t)))
-	if err != nil {
-		t.Fatalf("open: %v", err)
-	}
-	// Both pf.Close and the owned closer fail; the first error wins.
-	rd.closer = failCloser{}
-	if err := rd.Close(); !errKind(err, KindIO) {
-		t.Errorf("both close error = %v, want KindIO", err)
-	}
-}

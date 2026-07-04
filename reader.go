@@ -7,7 +7,6 @@ package parquet
 import (
 	"bytes"
 	"context"
-	"io"
 	"os"
 
 	xarrow "github.com/apache/arrow-go/v18/arrow"
@@ -46,9 +45,8 @@ var (
 // [OpenArrowFileReader], read with [ArrowFileReader.ReadTable] /
 // [ArrowFileReader.ReadRowGroup], and [ArrowFileReader.Close] it when done.
 type ArrowFileReader struct {
-	pf     *file.Reader
-	fr     *pqarrow.FileReader
-	closer io.Closer
+	pf *file.Reader
+	fr *pqarrow.FileReader
 }
 
 // NewArrowFileReader opens a Parquet reader over an in-memory random-access
@@ -58,7 +56,7 @@ func NewArrowFileReader(r parquet.ReaderAtSeeker) (*ArrowFileReader, error) {
 	if r == nil {
 		return nil, newError(KindArgument, "nil reader")
 	}
-	return newArrowFileReader(r, nil)
+	return newArrowFileReader(r)
 }
 
 // ReadTableBytes reads a whole Parquet file held in memory into a go-ruby-arrow
@@ -73,22 +71,22 @@ func ReadTableBytes(data []byte) (*gruby.Table, error) {
 }
 
 // OpenArrowFileReader opens the Parquet file at path
-// (Parquet::ArrowFileReader.new with a path). Close releases the file handle.
+// (Parquet::ArrowFileReader.new with a path). The whole file is buffered into
+// memory and the OS file handle is released before returning, so no handle
+// outlives the call — on Windows the file can then always be deleted, even
+// while the reader is still in use.
 func OpenArrowFileReader(path string) (*ArrowFileReader, error) {
-	f, err := os.Open(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, wrapError(KindIO, err, "open %s", path)
 	}
-	rd, err := newArrowFileReader(f, f)
-	if err != nil {
-		_ = f.Close()
-		return nil, err
-	}
-	return rd, nil
+	return newArrowFileReader(bytes.NewReader(b))
 }
 
-// newArrowFileReader builds the reader over r, optionally owning closer.
-func newArrowFileReader(r parquet.ReaderAtSeeker, closer io.Closer) (*ArrowFileReader, error) {
+// newArrowFileReader builds the reader over the in-memory random-access source
+// r. The source carries no OS file handle, so [ArrowFileReader.Close] has none
+// to release.
+func newArrowFileReader(r parquet.ReaderAtSeeker) (*ArrowFileReader, error) {
 	pf, err := file.NewParquetReader(r)
 	if err != nil {
 		return nil, wrapError(KindIO, err, "open Parquet file")
@@ -98,7 +96,7 @@ func newArrowFileReader(r parquet.ReaderAtSeeker, closer io.Closer) (*ArrowFileR
 		_ = pf.Close()
 		return nil, wrapError(KindIO, err, "open Parquet Arrow reader")
 	}
-	return &ArrowFileReader{pf: pf, fr: fr, closer: closer}, nil
+	return &ArrowFileReader{pf: pf, fr: fr}, nil
 }
 
 // ReadTable reads every row group into one go-ruby-arrow table
@@ -146,23 +144,18 @@ func (r *ArrowFileReader) Schema() (*gruby.Schema, error) {
 	return schemaToGruby(xs), nil
 }
 
-// Close releases the reader and, if it owns one, the underlying file handle
-// (Parquet::ArrowFileReader#close). It is idempotent.
+// Close releases the reader (Parquet::ArrowFileReader#close). The source is
+// always in memory, so there is no OS file handle to release. It is idempotent.
 func (r *ArrowFileReader) Close() error {
-	var firstErr error
-	if r.pf != nil {
-		if err := r.pf.Close(); err != nil {
-			firstErr = wrapError(KindIO, err, "close Parquet reader")
-		}
-		r.pf = nil
+	if r.pf == nil {
+		return nil
 	}
-	if r.closer != nil {
-		if err := r.closer.Close(); err != nil && firstErr == nil {
-			firstErr = wrapError(KindIO, err, "close underlying file")
-		}
-		r.closer = nil
+	err := r.pf.Close()
+	r.pf = nil
+	if err != nil {
+		return wrapError(KindIO, err, "close Parquet reader")
 	}
-	return firstErr
+	return nil
 }
 
 // Load reads a Parquet file at path into a go-ruby-arrow table, mirroring

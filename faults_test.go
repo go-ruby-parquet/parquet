@@ -35,11 +35,6 @@ type failWriteCloser struct{ w io.Writer }
 func (f failWriteCloser) Write(p []byte) (int, error) { return f.w.Write(p) }
 func (f failWriteCloser) Close() error                { return errFault }
 
-// failCloser is an io.Closer that always fails.
-type failCloser struct{}
-
-func (failCloser) Close() error { return errFault }
-
 // failReadSeekCloser is a parquet.ReaderAtSeeker (backed by a bytes.Reader) whose
 // Close fails, so the Parquet reader's Close error branch is reachable.
 type failReadSeekCloser struct{ r *bytes.Reader }
