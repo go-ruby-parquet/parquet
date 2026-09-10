@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	github.com/apache/arrow-go/v18 v18.8.0
-	github.com/go-ruby-arrow/arrow v0.0.0-20260819100858-85314c7b7b47
+	github.com/go-ruby-arrow/arrow v0.0.0-20260910084041-fd3a53122222
 )
 
 require (
