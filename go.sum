@@ -28,6 +28,8 @@ github.com/go-ruby-arrow/arrow v0.0.0-20260819100858-85314c7b7b47 h1:AFjc/ba6yVB
 github.com/go-ruby-arrow/arrow v0.0.0-20260819100858-85314c7b7b47/go.mod h1:vc4raJOUDaFiQPqxa8Vgw3rJNR1vxJbGg6hMZrghRMM=
 github.com/go-ruby-arrow/arrow v0.0.0-20260910084041-fd3a53122222 h1:+8ZYpZMWdDaH+iBXnnuNJqpDs4RN/Yqcy1IXs66Fnxc=
 github.com/go-ruby-arrow/arrow v0.0.0-20260910084041-fd3a53122222/go.mod h1:rsSzbHn8mE+/vsjlaWj9hPP8PHhb/jnLTUUm0Fozbn8=
+github.com/go-ruby-arrow/arrow v0.0.0-20261010102944-86c08abf65f1 h1:dMEQZqJQarFgmbcZCjps84r6+cTra+rlJ+DrdcsRrPA=
+github.com/go-ruby-arrow/arrow v0.0.0-20261010102944-86c08abf65f1/go.mod h1:8EtPKlG5CwNP8YTtO03mzVBHwj7LwrMei7NQ9k+1nFE=
 github.com/goccy/go-json v0.10.6 h1:p8HrPJzOakx/mn/bQtjgNjdTcN+/S6FcG2CTtQOrHVU=
 github.com/goccy/go-json v0.10.6/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
 github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
